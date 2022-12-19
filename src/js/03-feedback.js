@@ -1,10 +1,7 @@
 import throttle from 'lodash.throttle';
 
 const form = document.querySelector('.feedback-form');
-const emailInput = form.querySelector('[name = email]');
-const messageInput = form.querySelector('[name = message]');
 const formStateKey = 'feedback-form-state';
-const feedback = {};
 
 getValues();
 
@@ -12,36 +9,31 @@ form.addEventListener('input', throttle(saveFormValues, 500));
 form.addEventListener('submit', onFormSubmit);
 
 function getValues() {
-  if (localStorage.getItem(formStateKey)) {
-    try {
-      const feedbackValues = JSON.parse(localStorage.getItem(formStateKey));
+  const savedData = JSON.parse(localStorage.getItem(formStateKey));
+  if (!savedData) return;
 
-      emailInput.value = feedbackValues.email;
-      messageInput.value = feedbackValues.message;
-
-      feedback.email = feedbackValues.email;
-      feedback.message = feedbackValues.message;
-    } catch {
-      console.log('Невалідні дані');
-    }
-  }
+  const { email, message } = savedData;
+  form.elements.email.value = email || '';
+  form.elements.message.value = message || '';
 }
 
-function saveFormValues() {
-  if (emailInput.value || messageInput.value) {
-    localStorage.setItem(formStateKey, JSON.stringify(feedback));
-    feedback.email = emailInput.value;
-    feedback.message = messageInput.value;
-  } else {
-    localStorage.clear();
-  }
+function saveFormValues(e) {
+  const { name, value } = e.target;
+  const feedbackData = JSON.parse(localStorage.getItem(formStateKey)) || {};
+
+  feedbackData[name] = value;
+  localStorage.setItem(formStateKey, JSON.stringify(feedbackData));
 }
 
 function onFormSubmit(e) {
   e.preventDefault();
-  if (emailInput.value || messageInput.value) {
-    console.log(feedback);
-    form.reset();
-    localStorage.clear();
-  }
+
+  const {
+    email: { value: email },
+    message: { value: message },
+  } = e.target.elements;
+
+  console.log({ email, message });
+  form.reset();
+  localStorage.removeItem(formStateKey);
 }
